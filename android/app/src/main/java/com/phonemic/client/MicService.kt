@@ -18,7 +18,7 @@ import java.net.Socket
 
 class MicService : Service() {
     data class State(val message: String, val active: Boolean = false, val connected: Boolean = false,
-                     val muted: Boolean = false)
+                     val muted: Boolean = false, val host: String? = null)
 
     companion object {
         const val STOP = "com.phonemic.client.STOP"
@@ -46,6 +46,7 @@ class MicService : Service() {
 
     private val main = Handler(Looper.getMainLooper())
     private var socket: Socket? = null
+    private var queuedHost: String? = null
     @Volatile private var muted = false
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -60,7 +61,15 @@ class MicService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        if (socket != null) return START_NOT_STICKY
+        val current = socket
+        if (current != null) {
+            if (state.host != host) {
+                queuedHost = host
+                runCatching { current.close() }
+                update(State("Switching receiver…", active = true, muted = muted, host = host))
+            }
+            return START_NOT_STICKY
+        }
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(NotificationChannel(CHANNEL, "PhoneMic", NotificationManager.IMPORTANCE_LOW))
         try {
@@ -69,13 +78,17 @@ class MicService : Service() {
             stopSession("Android denied microphone service access.")
             return START_NOT_STICKY
         }
-        val connection = Socket()
         muted = false
+        beginStream(host)
+        return START_NOT_STICKY
+    }
+
+    private fun beginStream(host: String) {
+        val connection = Socket()
         socket = connection
         activeService = this
-        update(State("Connecting…", active = true))
+        update(State("Connecting…", active = true, muted = muted, host = host))
         Thread({ stream(connection, host) }, "PhoneMic audio").start()
-        return START_NOT_STICKY
     }
 
     private fun notification(message: String): Notification {
@@ -119,7 +132,10 @@ class MicService : Service() {
             audio.startRecording()
             check(audio.recordingState == AudioRecord.RECORDSTATE_RECORDING)
             main.post {
-                if (socket === connection) update(State("Streaming", active = true, connected = true))
+                if (socket === connection && queuedHost == null) {
+                    update(State(if (muted) "Muted" else "Streaming",
+                        active = true, connected = true, muted = muted, host = host))
+                }
             }
             val samples = ShortArray(320)
             val bytes = ByteArray(samples.size * 2)
@@ -141,7 +157,12 @@ class MicService : Service() {
         } finally {
             recorder?.release()
             runCatching { connection.close() }
-            main.post { if (socket === connection) stopSession(failure) }
+            main.post {
+                if (socket !== connection) return@post
+                val next = queuedHost
+                queuedHost = null
+                if (next == null) stopSession(failure) else beginStream(next)
+            }
         }
     }
 
@@ -155,6 +176,7 @@ class MicService : Service() {
     private fun closeSession() {
         val connection = socket
         socket = null
+        queuedHost = null
         runCatching { connection?.close() }
         if (activeService === this) activeService = null
     }

@@ -1,3 +1,4 @@
 .phonemic-tools/
 __pycache__/
 phonemic-test.wav
+windows/PhoneMic.exe
