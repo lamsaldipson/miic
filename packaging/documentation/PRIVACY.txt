@@ -1,5 +1,5 @@
 PhoneMic Privacy Notice
-Publisher: Bipsan Lamsam. Draft pending legal review.
+Publisher: Dipsan Lamsal. Draft pending legal review.
 
 The packaged Android app captures microphone audio only after permission is
 granted and the user starts a connection. It buffers PCM temporarily in memory
