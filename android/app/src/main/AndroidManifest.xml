@@ -4,7 +4,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <application android:label="PhoneMic" android:usesCleartextTraffic="true"
+    <application android:label="PhoneMic" android:icon="@mipmap/phonemic" android:roundIcon="@mipmap/phonemic" android:usesCleartextTraffic="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <service android:name=".MicService" android:exported="false"
             android:foregroundServiceType="microphone" />
