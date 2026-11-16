@@ -10,6 +10,7 @@ using System.Web.Script.Serialization;
 sealed class Receiver : IDisposable
 {
     readonly string name;
+    readonly string identity;
     readonly int device;
     readonly TcpListener audio = new TcpListener(IPAddress.Any, 8766);
     readonly TcpListener http = new TcpListener(IPAddress.Any, 8765);
@@ -23,9 +24,10 @@ sealed class Receiver : IDisposable
     volatile bool stopped;
     readonly Action<string> report;
 
-    public Receiver(string name, int device, Action<string> report)
+    public Receiver(string name, string identity, int device, Action<string> report)
     {
         this.name = name;
+        this.identity = identity;
         this.device = device;
         this.report = report;
         try {
@@ -47,7 +49,7 @@ sealed class Receiver : IDisposable
     void Discover()
     {
         var reply = Encoding.UTF8.GetBytes(new JavaScriptSerializer().Serialize(
-            new { protocol = "PhoneMic/1", name = name }));
+            new { protocol = "PhoneMic/1", id = identity, name = name }));
         while (!stopped) {
             try {
                 IPEndPoint peer = null;

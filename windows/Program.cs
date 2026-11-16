@@ -35,6 +35,7 @@ sealed class ReceiverWindow : Form
     readonly ToolStripMenuItem trayToggle;
     readonly string settings = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                                             "PhoneMic", "receiver.txt");
+    readonly string identity = Guid.NewGuid().ToString("N");
     Receiver receiver;
     bool quitting;
 
@@ -125,7 +126,7 @@ sealed class ReceiverWindow : Form
         }
         var selected = (KeyValuePair<int, string>)output.SelectedItem;
         try {
-            receiver = new Receiver(configuredName, selected.Key, error => {
+            receiver = new Receiver(configuredName, identity, selected.Key, error => {
                 if (!IsDisposed && IsHandleCreated) {
                     try { BeginInvoke((Action)(() => { if (receiver != null) status.Text = error; })); }
                     catch (InvalidOperationException) { }

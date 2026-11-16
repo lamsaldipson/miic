@@ -7,6 +7,7 @@ import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.Inet4Address
 import java.net.InetAddress
+import java.net.InterfaceAddress
 import java.net.NetworkInterface
 import java.net.SocketTimeoutException
 
@@ -17,17 +18,19 @@ internal object ReceiverDiscovery {
     private val query = "PhoneMic discover/1".toByteArray(Charsets.US_ASCII)
 
     fun scan(manualAddress: String?): List<LanReceiver> {
-        val receivers = mutableMapOf<String, LanReceiver>()
+        val receivers = mutableMapOf<String, Pair<LanReceiver, Int>>()
         try {
             DatagramSocket().use { socket ->
                 socket.broadcast = true
                 val destinations = mutableSetOf(InetAddress.getByName("255.255.255.255"))
                 if (manualAddress != null) destinations += InetAddress.getByName(manualAddress)
+                val localAddresses = mutableListOf<InterfaceAddress>()
                 val interfaces = NetworkInterface.getNetworkInterfaces()
                 while (interfaces != null && interfaces.hasMoreElements()) {
                     val network = interfaces.nextElement()
                     if (network.isUp && !network.isLoopback) {
                         for (address in network.interfaceAddresses) {
+                            if (address.address is Inet4Address) localAddresses += address
                             address.broadcast?.let { destinations += it }
                         }
                     }
@@ -59,12 +62,37 @@ internal object ReceiverDiscovery {
                     if (info.optString("protocol") != "PhoneMic/1") continue
                     val name = info.optString("name").trim().take(64)
                     val ip = address.hostAddress ?: continue
-                    if (name.isNotEmpty()) receivers[ip] = LanReceiver(name, ip)
+                    if (name.isEmpty()) continue
+                    val id = info.optString("id").takeIf { it.length == 32 } ?: ip
+                    val priority = when {
+                        ip == manualAddress -> 2
+                        localAddresses.any { matchesSubnet(address, it) } -> 1
+                        else -> 0
+                    }
+                    val previous = receivers[id]
+                    if (previous == null || priority > previous.second ||
+                        (priority == previous.second && ip < previous.first.address)) {
+                        receivers[id] = LanReceiver(name, ip) to priority
+                    }
                 }
             }
         } catch (_: IOException) {
             // The Wi-Fi interface can disappear during a scan.
         }
-        return receivers.values.sortedWith(compareBy({ it.name.lowercase() }, { it.address }))
+        return receivers.values.map { it.first }
+            .sortedWith(compareBy({ it.name.lowercase() }, { it.address }))
+    }
+
+    private fun matchesSubnet(address: Inet4Address, local: InterfaceAddress): Boolean {
+        val prefix = local.networkPrefixLength.toInt()
+        if (prefix !in 1..32) return false
+        val remoteBytes = address.address
+        val localBytes = local.address.address
+        for (index in 0 until 4) {
+            val bits = (prefix - 8 * index).coerceIn(0, 8)
+            val mask = 255 and (255 shl (8 - bits))
+            if ((remoteBytes[index].toInt() and mask) != (localBytes[index].toInt() and mask)) return false
+        }
+        return true
     }
 }
