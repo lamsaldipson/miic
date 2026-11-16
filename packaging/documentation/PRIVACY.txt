@@ -1,5 +1,5 @@
 PhoneMic Privacy Notice
-Draft pending publisher details and legal review.
+Publisher: Bipsan Lamsam. Draft pending legal review.
 
 The packaged Android app captures microphone audio only after permission is
 granted and the user starts a connection. It buffers PCM temporarily in memory
@@ -31,4 +31,4 @@ paths and configuration details. They do not contain audio.
 
 To stop capture, disconnect or revoke Android's microphone permission. Remove
 the apps through the operating system and select settings removal on Windows
-if desired. Privacy contact: [Publisher contact].
+if desired. For privacy questions, open a support issue without posting personal information: https://github.com/lamsaldipson/miic/issues

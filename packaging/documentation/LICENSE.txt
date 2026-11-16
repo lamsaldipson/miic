@@ -1,9 +1,9 @@
 PhoneMic End User License Agreement
 DRAFT. Professional legal review is required before public distribution.
 
-Publisher: Dipsham Monsal
-Support and legal contact: [Contact details]
-Effective date: [Effective date]
+Publisher: Bipsan Lamsam
+Support: https://github.com/lamsaldipson/miic/issues
+Effective date: November 16, 2026
 
 1. Purpose and permitted use
 PhoneMic transmits microphone audio from an Android phone to a receiver chosen

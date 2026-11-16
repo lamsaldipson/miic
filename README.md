@@ -48,7 +48,7 @@ clap to the audio peak to measure the offset on your setup.
 
 ## Terms and privacy
 
-Publisher: **Dipsham Monsal**. Use the app only with permission and on a trusted
+Publisher: **Bipsan Lamsam**. Use the app only with permission and on a trusted
 network. The stream is unencrypted and there is no receiver authentication.
 The packaged apps do not save microphone recordings by default.
 
