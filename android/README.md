@@ -4,6 +4,27 @@ Use VS Code to edit the Kotlin source and PowerShell to build. The app supports
 Android 8.0 and newer. The project uses Android API 35, JDK 17, and the Gradle
 8.9 Wrapper. It limits Gradle to two workers and a 768 MB Java heap.
 
+## One-time setup
+
+Download a Windows x64 JDK 17 ZIP and the Android SDK Command-Line Tools ZIP.
+Extract the JDK so `.phonemic-tools/jdk/<jdk-folder>/bin/javac.exe` exists.
+Extract the Android tools so `.phonemic-tools/sdk/cmdline-tools/latest/bin/sdkmanager.bat`
+exists. From the workspace root, run this in PowerShell:
+
+```powershell
+$root = (Resolve-Path .\.phonemic-tools).Path
+$env:JAVA_HOME = (Get-ChildItem "$root\jdk" -Directory | Select-Object -First 1).FullName
+$env:ANDROID_HOME = Join-Path $root 'sdk'
+$env:ANDROID_USER_HOME = Join-Path $root 'android-user'
+$manager = Join-Path $env:ANDROID_HOME 'cmdline-tools\latest\bin\sdkmanager.bat'
+& $manager "--sdk_root=$env:ANDROID_HOME" 'platforms;android-35' 'build-tools;34.0.0' 'platform-tools'
+```
+
+Review and accept the Android SDK license when prompted. The first build
+downloads Gradle and the build dependencies into `.phonemic-tools`.
+
+## Build and install
+
 From the workspace root, with the local JDK and SDK prepared:
 
 ```powershell

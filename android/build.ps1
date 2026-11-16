@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $toolRoot = Join-Path $root '.phonemic-tools'
-$jdk = Get-ChildItem (Join-Path $toolRoot 'jdk') -Directory | Where-Object {
+$jdk = Get-ChildItem (Join-Path $toolRoot 'jdk') -Directory -ErrorAction SilentlyContinue | Where-Object {
     Test-Path (Join-Path $_.FullName 'bin\javac.exe')
 } | Select-Object -First 1
 $sdk = Join-Path $toolRoot 'sdk'
