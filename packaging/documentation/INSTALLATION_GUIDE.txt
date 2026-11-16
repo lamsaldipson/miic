@@ -1,0 +1,37 @@
+PhoneMic installation guide
+
+Windows 10 or 11 x64
+1. Launch PhoneMicSetup.exe. Administrator approval is needed to install in
+   Program Files. Read the draft agreement and select the desired shortcuts.
+2. If Setup detects VB-CABLE, proceed. Otherwise open the official driver page
+   from Setup, download standard VB-CABLE, extract the entire archive and run
+   VBCABLE_Setup_x64.exe as administrator. Follow the vendor's instructions to
+   restart. Check again after restart. Setup can install the receiver while
+   leaving the virtual microphone pending.
+3. Open PhoneMic. Select CABLE Input as Windows audio output. In the app that
+   needs a microphone, select CABLE Output. Windows default speakers do not
+   need to change. Use PhoneMic on a trusted private network.
+4. Use the notification area icon to manage the receiver and its startup entry.
+   Windows Startup Apps can also disable the startup entry.
+
+Vendor download verification
+The inspected Pack46 ZIP downloaded from the official vendor site had SHA-256
+BC44E8974191A5A2427D6C979E2DAB08DBB09925F3F435DFA2F0BA3E45B6EB90.
+To verify that exact ZIP, use Get-FileHash with SHA256. Do not use this hash
+for another driver version. Before running the extracted installer, use its
+Windows Properties Digital Signatures tab and confirm Windows reports a valid
+signature for the vendor. Pack46's x64 installer was signed by BUREL VINCENT.
+The PhoneMic installer neither bundles nor runs vendor binaries.
+
+Android 8.0 and newer
+Install PhoneMic.apk on your phone, subject to Android's restrictions on
+installing from that source. The release key differs from the development
+debug key. A development copy must be uninstalled first, which clears its
+saved settings. Launch the app, select the Windows receiver, and grant
+microphone access. Connect both devices to the same Wi-Fi or trusted LAN.
+
+Removal
+Use Windows Installed Apps to uninstall PhoneMic. Choose whether to remove
+saved settings for the account running the uninstaller. VB-CABLE remains
+available for other applications and can be removed separately with the vendor
+installer if needed. Use Android Settings to uninstall the phone app.

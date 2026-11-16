@@ -1,0 +1,34 @@
+PhoneMic Privacy Notice
+Draft pending publisher details and legal review.
+
+The packaged Android app captures microphone audio only after permission is
+granted and the user starts a connection. It buffers PCM temporarily in memory
+and sends it over TCP to the selected Windows receiver. Mute sends silence.
+The packaged Windows receiver uses transient buffers for playback and does not
+write audio recordings. The separate developer-only Python receiver can write
+a WAV when explicitly started with its capture option and is not installed by
+PhoneMic Setup.
+
+Discovery uses local network broadcasts. Audio goes to the IP selected by the
+user. Manual entry accepts a reachable IPv4 address, so audio can leave the
+local network if pointed at an external host. Traffic is unencrypted and the
+receiver has no pairing or authentication. Use it on a trusted private network
+and select only a receiver you control. Windows applications using the chosen
+audio endpoint can record or transmit audio under their own policies.
+
+PhoneMic does not send audio or metadata to developer-controlled services.
+There is no telemetry or analytics SDK in the packaged apps. The Windows
+receiver tracks recent client IPs in memory and displays them on its local
+dashboard. Windows saves the receiver name and selected audio endpoint in
+%LOCALAPPDATA%\PhoneMic\receiver.txt. A startup option creates a Windows
+registry entry. Android saves the last receiver IP and notification-prompt
+state in local preferences. The packaged apps do not persist streaming logs.
+
+The installer can open the official VB-Audio website when requested. That
+website and its separate installer are governed by VB-Audio's policies.
+Installer logs created through Inno Setup's logging option can include local
+paths and configuration details. They do not contain audio.
+
+To stop capture, disconnect or revoke Android's microphone permission. Remove
+the apps through the operating system and select settings removal on Windows
+if desired. Privacy contact: [Publisher contact].

@@ -62,6 +62,32 @@ sealed class Playback : IDisposable
         }
     }
 
+    [DllImport("winmm.dll")] static extern uint waveInGetNumDevs();
+    [DllImport("winmm.dll", CharSet = CharSet.Unicode)]
+    static extern uint waveInGetDevCaps(UIntPtr id, out Capabilities caps, uint size);
+
+    internal static bool CableAvailable()
+    {
+        bool recordingEndpoint = false;
+        uint size = (uint)Marshal.OffsetOf(typeof(Capabilities), "Support").ToInt32();
+        for (uint i = 0; i < waveInGetNumDevs(); i++) {
+            Capabilities caps;
+            if (waveInGetDevCaps((UIntPtr)i, out caps, size) == 0 &&
+                caps.Name.StartsWith("CABLE Output (VB-Audio", StringComparison.OrdinalIgnoreCase)) {
+                recordingEndpoint = true;
+                break;
+            }
+        }
+        if (!recordingEndpoint) return false;
+        foreach (var device in Devices()) {
+            if (!device.Value.StartsWith("CABLE Input (VB-Audio", StringComparison.OrdinalIgnoreCase)) continue;
+            try {
+                using (new Playback(device.Key)) { }
+                return true;
+            } catch (InvalidOperationException) { return false; }
+        }
+        return false;
+    }
     static void Check(uint result, string action)
     {
         if (result != 0) throw new InvalidOperationException(action + " (Windows audio error " + result + ").");

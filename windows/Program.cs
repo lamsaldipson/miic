@@ -6,25 +6,78 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using Microsoft.Win32;
 
 static class Program
 {
-    [STAThread]
-    static void Main()
+    const string MutexName = @"Local\PhoneMicReceiver";
+    const string OpenEvent = @"Local\PhoneMicReceiver.Open";
+    const string StopEvent = @"Local\PhoneMicReceiver.Stop";
+    const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
+
+    static void Signal(string name)
     {
+        EventWaitHandle handle;
+        if (EventWaitHandle.TryOpenExisting(name, out handle))
+            using (handle) handle.Set();
+    }
+
+    internal static bool StartWithWindows
+    {
+        get {
+            using (var key = Registry.CurrentUser.OpenSubKey(RunKey))
+                return key != null && key.GetValue("PhoneMic") != null;
+        }
+        set {
+            using (var key = Registry.CurrentUser.CreateSubKey(RunKey)) {
+                if (value) key.SetValue("PhoneMic", "\"" + Application.ExecutablePath + "\" --tray");
+                else key.DeleteValue("PhoneMic", false);
+            }
+        }
+    }
+
+    [STAThread]
+    static int Main(string[] args)
+    {
+        if (args.Contains("--check-cable")) return Playback.CableAvailable() ? 0 : 1;
+        bool stop = args.Contains("--shutdown");
+        bool background = args.Contains("--tray");
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         bool first;
-        using (var mutex = new Mutex(true, @"Local\PhoneMicReceiver", out first)) {
+        using (var mutex = new Mutex(true, MutexName, out first)) {
             if (!first) {
-                MessageBox.Show("PhoneMic is already running. Open it from the Windows notification area.", "PhoneMic");
-                return;
+                if (stop) {
+                    Signal(StopEvent);
+                    try { return mutex.WaitOne(5000) ? 0 : 1; }
+                    catch (AbandonedMutexException) { return 0; }
+                }
+                if (!background) Signal(OpenEvent);
+                return 0;
             }
-            using (var window = new ReceiverWindow()) Application.Run(window);
+            if (stop) return 0;
+            using (var open = new EventWaitHandle(false, EventResetMode.AutoReset, OpenEvent))
+            using (var shutdown = new EventWaitHandle(false, EventResetMode.AutoReset, StopEvent))
+            using (var window = new ReceiverWindow())
+            using (var context = new ApplicationContext()) {
+                var handle = window.Handle;
+                window.FormClosed += (sender, e) => context.ExitThread();
+                var show = ThreadPool.RegisterWaitForSingleObject(open, (s, t) =>
+                    window.BeginInvoke((Action)window.OpenWindow), null, Timeout.Infinite, false);
+                var close = ThreadPool.RegisterWaitForSingleObject(shutdown, (s, t) =>
+                    window.BeginInvoke((Action)window.ExitReceiver), null, Timeout.Infinite, true);
+                try {
+                    window.Initialize(background);
+                    Application.Run(context);
+                } finally {
+                    show.Unregister(null);
+                    close.Unregister(null);
+                }
+            }
+            return 0;
         }
     }
 }
-
 sealed class ReceiverWindow : Form
 {
     readonly TextBox name = new TextBox { MaxLength = 64, Dock = DockStyle.Fill };
@@ -36,6 +89,7 @@ sealed class ReceiverWindow : Form
     readonly string settings = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                                             "PhoneMic", "receiver.txt");
     readonly string identity = Guid.NewGuid().ToString("N");
+    readonly int selectedOutput;
     Receiver receiver;
     bool quitting;
 
@@ -76,19 +130,27 @@ sealed class ReceiverWindow : Form
         var selected = devices.FindIndex(x => x.Value == savedOutput);
         if (selected < 0) selected = devices.FindIndex(x => x.Value.StartsWith("CABLE Input", StringComparison.OrdinalIgnoreCase));
         output.SelectedIndex = selected;
+        selectedOutput = selected;
 
         var menu = new ContextMenuStrip();
         menu.Items.Add("Open PhoneMic", null, (sender, args) => OpenWindow());
         trayToggle = new ToolStripMenuItem("Turn on", null, (sender, args) => Toggle());
         menu.Items.Add(trayToggle);
-        menu.Items.Add("Exit", null, (sender, args) => { quitting = true; Close(); });
+        var startup = new ToolStripMenuItem("Start PhoneMic with Windows") { CheckOnClick = false };
+        menu.Items.Add(startup);
+        menu.Opening += (sender, args) => startup.Checked = Program.StartWithWindows;
+        startup.Click += (sender, args) => {
+            try { Program.StartWithWindows = !startup.Checked; }
+            catch (Exception error) {
+                if (!(error is UnauthorizedAccessException) && !(error is IOException)) throw;
+                MessageBox.Show("Could not update Windows startup settings.", "PhoneMic");
+            }
+        };
+        menu.Items.Add("Exit", null, (sender, args) => ExitReceiver());
         tray = new NotifyIcon { Icon = Icon, Text = "PhoneMic · Off", ContextMenuStrip = menu, Visible = true };
         tray.DoubleClick += (sender, args) => OpenWindow();
         toggle.Click += (sender, args) => Toggle();
-        Shown += (sender, args) => {
-            if (selected >= 0) TurnOn();
-            else status.Text = "Choose an audio output and turn on.";
-        };
+
         Resize += (sender, args) => { if (WindowState == FormWindowState.Minimized) Hide(); };
         FormClosing += (sender, args) => {
             if (!quitting && args.CloseReason == CloseReason.UserClosing) {
@@ -102,7 +164,20 @@ sealed class ReceiverWindow : Form
         FormClosed += (sender, args) => { tray.ContextMenuStrip.Dispose(); tray.Dispose(); };
     }
 
-    void OpenWindow()
+    internal void Initialize(bool background)
+    {
+        if (!background) OpenWindow();
+        if (selectedOutput >= 0) TurnOn(!background);
+        else status.Text = "Choose an audio output and turn on.";
+    }
+
+    internal void ExitReceiver()
+    {
+        quitting = true;
+        Close();
+    }
+
+    internal void OpenWindow()
     {
         Show();
         WindowState = FormWindowState.Normal;
@@ -111,7 +186,7 @@ sealed class ReceiverWindow : Form
 
     void Toggle() { if (receiver == null) TurnOn(); else TurnOff(); }
 
-    void TurnOn()
+    void TurnOn(bool showErrors = true)
     {
         var configuredName = name.Text.Trim();
         if (configuredName.Length == 0) {
@@ -134,11 +209,11 @@ sealed class ReceiverWindow : Form
             });
             UpdateState();
         } catch (SocketException error) {
-            OpenWindow();
+            if (showErrors) OpenWindow();
             status.Text = "Could not turn on. " + error.Message;
             return;
         } catch (InvalidOperationException error) {
-            OpenWindow();
+            if (showErrors) OpenWindow();
             status.Text = "Could not turn on. " + error.Message;
             return;
         }

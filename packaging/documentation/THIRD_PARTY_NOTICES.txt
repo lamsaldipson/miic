@@ -1,0 +1,15 @@
+PhoneMic third-party notices
+
+VB-CABLE Virtual Audio Device is donationware by VB-Audio / Vincent Burel.
+All contributions are welcome. VB-CABLE is supplied separately by the vendor.
+Website: https://vb-audio.com/Cable/
+License: https://vb-audio.com/Services/licensing.htm
+See the license packaged with the specific official driver download.
+PhoneMic does not remove the vendor's driver at uninstall.
+
+Inno Setup, by Jordan Russell and Martijn Laan, is used to build the Windows
+installer. See https://jrsoftware.org/inno-setup/ and the Inno Setup license.
+
+The Android app uses the Kotlin standard library, distributed under the Apache
+License 2.0. See https://github.com/JetBrains/kotlin and
+https://www.apache.org/licenses/LICENSE-2.0.

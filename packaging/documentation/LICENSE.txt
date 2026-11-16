@@ -1,0 +1,50 @@
+PhoneMic End User License Agreement
+DRAFT. Professional legal review is required before public distribution.
+
+Publisher: [Legal name]
+Publisher address: [Legal address]
+Support and legal contact: [Contact details]
+Effective date: [Effective date]
+
+1. Purpose and permitted use
+PhoneMic transmits microphone audio from an Android phone to a receiver chosen
+by the user. The publisher grants a personal, nonexclusive license to install
+and use PhoneMic for lawful purposes on devices you are authorized to use.
+
+2. Privacy and audio handling
+The packaged PhoneMic apps process microphone audio solely to provide the audio
+transmission you request. They do not record or retain it by default, or use
+it for advertising, AI training, experiments, research, or analytics. They do
+not sell it or transmit it to developer-controlled cloud services. The chosen
+receiver and any apps using its Windows audio input can receive the stream.
+See the Privacy Notice for technical details.
+
+3. Microphone permission and consent
+Android asks for microphone permission before streaming can begin. You choose
+when to connect, mute, or disconnect. Android can revoke microphone permission.
+You are responsible for obtaining any consent required from people whose audio
+you transmit and complying with applicable privacy and recording laws.
+
+4. Third-party software
+VB-Audio Virtual Cable is separate donationware by VB-Audio (Vincent Burel).
+All contributions are welcome. It is offered under the vendor's license.
+Official website: https://vb-audio.com/Cable/
+Licensing: https://vb-audio.com/Services/licensing.htm
+
+5. Availability and liability
+Audio quality, latency, and availability depend on your network, devices, OS,
+and third-party applications. To the extent permitted by applicable law,
+PhoneMic is provided as is without implied warranties. Any exclusions or limits
+apply only as permitted by law and do not limit nonwaivable rights or liability
+that applicable law prohibits limiting. Governing law: [To be determined after
+legal review].
+
+6. Updates
+Release notes and material changes to these terms will accompany future
+packages. Changes requiring consent will be presented before installation or
+use as required by applicable law.
+
+7. Uninstallation
+Remove PhoneMic through Windows Installed Apps and choose whether to remove
+your saved receiver settings. Remove the Android app through Android Settings
+to delete its local app data. VB-CABLE is managed separately by its vendor.

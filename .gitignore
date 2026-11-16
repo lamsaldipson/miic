@@ -2,3 +2,4 @@
 __pycache__/
 phonemic-test.wav
 windows/PhoneMic.exe
+/release/
